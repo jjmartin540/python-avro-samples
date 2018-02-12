@@ -1,0 +1,65 @@
+version: "3.2"
+
+services:
+  #postgres:
+  #  container_name: postgres_db_kafka
+  #  hostname: postgres
+  #  image: postgres:latest
+  #  volumes:
+  #      - postgres_data:/tmp/pgdata
+  #This includes both kafka and ZK for convienience
+  kafka:
+    image: spotify/kafka:latest
+    container_name: "kafka"
+    environment:
+      ADVERTISED_HOST: kafka
+      ADVERTISED_PORT: 9092
+      KAFKA: kafka
+    expose:
+      - 2181
+      - 9092
+      - 9093
+    ports:
+      - 2181:2181
+      - 9092:9092
+      - 9093:9093 # in case we get ambitious security-wise
+    #network_mode: host
+  test:
+    build: .
+    container_name: "kafkatest"
+    environment:
+      KAFKA: kafka
+      ZOOKEEPER: zookeeper
+      SCHEMA_REGISTRY: http://schema-registry:8081
+      DB_NAME: "postgres"
+      DB_USER: "postgres"
+      DB_HOST: "db"
+      DB_PASSWORD: "dummydummy"
+      SECRET_KEY: "dummydummydummydummydummydummy"
+      EXEC_PATH: "/src"
+    ports:
+      #- 80:8000
+      - "8000:8000"
+    volumes:
+      - ./:/src
+    #network_mode: host
+  schema-registry:
+    image: confluentinc/cp-schema-registry:latest
+    container_name: "schema-registry"
+    ports:
+      - "8081:8081"
+    environment:
+      SCHEMA_REGISTRY_HOST_NAME: "schema-registry"
+      SCHEMA_REGISTRY_KAFKASTORE_SECURITY_PROTOCOL: PLAINTEXT
+      SCHEMA_REGISTRY_KAFKASTORE_CONNECTION_URL: "kafka:2181" #this is the *ZK* connection string because reasons
+      KAFKA_REST_CUB_KAFKA_MIN_BROKERS: 1
+  #salsify:
+  #  image: andrewrjones/docker-salsify-avro-schema-registry
+  #  environment:
+  #    DATABASE_URL: "postgres://postgres:postgres@postgres/postgres"
+  #  ports:
+  #    - 21000:21000
+  #    - 8081:8081
+  #  #network_mode: host
+#volumes:
+#    postgres_data:

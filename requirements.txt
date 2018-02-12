@@ -1,0 +1,5 @@
+confluent-kafka[avro]
+django
+djangorestframework
+django-filter
+requests
